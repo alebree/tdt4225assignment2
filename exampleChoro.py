@@ -129,7 +129,7 @@ class ExampleProgram:
                                 print(label[2])
                                 if(df['5_6'].iloc[0] == label[3] and df['5_6'].iloc[-1] == label[4]):
                                     df.drop(['2'])
-                                    df = df.rename(columns={'5_6': 'date_time', '0': 'lat', '1':'lon', '3':'altitude', '4':'date_days'})
+                                    df = df.rename(columns={'5_6': 'date_time', 0: 'lat', 1:'lon', 3:'altitude', 4:'date_days'})
                                     
                                     
                                     df.insert(0, 'id', range(id_trackPoint, id_trackPoint + len(df)))
@@ -138,11 +138,15 @@ class ExampleProgram:
                                     id_trackPoint = id_trackPoint + len(df)+1
                                     
                                 if(df['5_6'].iloc[0] != label[3] and df['5_6'].iloc[-1] != label[4]):
+                                    
+                                    df.drop(2)
+                                    df = df.rename(columns={'5_6': 'date_time', 0: 'lat', 1:'lon', 3:'altitude', 4:'date_days'})
+                                    
                                     # df.drop(['2'])
                                     # df = df.rename(columns={'5_6': 'date_time', '0': 'lat', '1':'lon', '3':'altitude', '4':'date_days'})
                                     # print(df.head())
-                                    # df.insert(0, 'id', range(id_trackPoint, id_trackPoint + len(df)))
-                                    
+                                    df.insert(0, 'id', range(id_trackPoint, id_trackPoint + len(df)))
+                                    print(df.head())
                                     id_trackPoint = id_trackPoint + len(df)+1
                             
                             #rest see insert_activity
