@@ -3,6 +3,8 @@ import csv
 from DbConnector import DbConnector
 from tabulate import tabulate
 import os
+import pandas as pd
+
 
 # get relevant users with activity data from textfile and return list with string user IDs
 def relevant_users():
@@ -36,6 +38,45 @@ def read_labels():
             pass
     return insert_dic
 
+
+
+# interate trhough users
+# check if trajectories > 2506 lines
+# check if theres an activity already (from lables.txt)
+# if not insert activity
+# if match activity and insert trackpoints
+
+def inserttrackpoints():
+    users = relevant_users()
+    for (root,dirs,files) in os.walk('Data'):
+        user = str(root[5:8])
+        if user in users:
+            if root[9:] == "Trajectory":
+                # Now we are in the right folder
+                #print(files)
+                #break
+                for filename in files:
+                    # read file and skip the headerrows
+                    pltfile = pd.read_csv(str(root)+ '\\' + filename, skiprows=5)
+                    pltfile = pltfile.values.tolist()
+                    print(len(pltfile))
+                    print(pltfile[0])
+                    break
+                    if len(pltfile) > 2500:
+                        print("More than 2500, skip this activity")
+                        continue
+                    else:
+                        # insert activity here
+                        
+                        # insert Trackpoints with the same activity ID 
+                        # print('use this file')
+                        pass
+
+
+                    
+        
+
+inserttrackpoints()
 
 class ExampleProgram:
 
@@ -159,4 +200,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    pass
+    #main()
