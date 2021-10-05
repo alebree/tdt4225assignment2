@@ -39,45 +39,6 @@ def read_labels():
     return insert_dic
 
 
-
-# interate trhough users
-# check if trajectories > 2506 lines
-# check if theres an activity already (from lables.txt)
-# if not insert activity
-# if match activity and insert trackpoints
-
-def inserttrackpoints():
-    users = relevant_users()
-    for (root,dirs,files) in os.walk('Data'):
-        user = str(root[5:8])
-        if user in users:
-            if root[9:] == "Trajectory":
-                # Now we are in the right folder
-                #print(files)
-                #break
-                for filename in files:
-                    # read file and skip the headerrows
-                    pltfile = pd.read_csv(str(root)+ '\\' + filename, skiprows=5)
-                    pltfile = pltfile.values.tolist()
-                    print(len(pltfile))
-                    print(pltfile[0])
-                    break
-                    if len(pltfile) > 2500:
-                        print("More than 2500, skip this activity")
-                        continue
-                    else:
-                        # insert activity here
-                        
-                        # insert Trackpoints with the same activity ID 
-                        # print('use this file')
-                        pass
-
-
-                    
-        
-
-inserttrackpoints()
-
 class ExampleProgram:
 
     def __init__(self):
@@ -118,6 +79,42 @@ class ExampleProgram:
                 """
         self.cursor.execute(query)
         self.db_connection.commit()
+    
+    def insert_activity_and_trackpoints(self):
+        users = []
+        for user in range(182):
+            users.append(f"{user:03d}")
+
+        for (root,dirs,files) in os.walk('Data'):
+            user = str(root[5:8])
+            # testing with user 6
+            if user =='006': #in users:
+                if root[9:] == "Trajectory":
+                    # Now we are in the right folder
+                    for filename in files:
+                        # read file and skip the 6 headerrows - very important
+                        pltfile = pd.read_csv(str(root)+ '\\' + filename, skiprows=[0,1,2,3,4,5])
+                        pltfile = pltfile.values.tolist()
+
+                        if len(pltfile) > 2500:
+                            print("More than 2500, skip this activity")
+                            continue
+                        else:
+                            # insert activity here
+                            activity_insert = [user, str(pltfile[0][5]) +' ' + str(pltfile[0][6]), str(pltfile[-1][5]) + ' ' + str(pltfile[-1][6])]
+                            query = "INSERT INTO Activity (user_id, start_date_time, end_date_time) VALUES (%s, %s, %s)"
+                            self.cursor.execute(query, activity_insert)
+
+                            #get the activity ID from the last insert
+                            activity_id = self.cursor.lastrowid
+                            # insert Trackpoints with the same activity ID
+                            for i in range(len(pltfile)):
+                                trackpoint_insert = [activity_id, pltfile[i][0], pltfile[i][1], pltfile[i][3], pltfile[i][4], str(pltfile[i][5]) + ' ' + str(pltfile[i][6])]
+                                trackpoint_query = "INSERT INTO TrackPoint (activity_id, lat, lon, altitude, date_days, date_time) VALUES (%s, %s, %s, %s, %s, %s)"
+                                self.cursor.execute(trackpoint_query, trackpoint_insert)
+                            self.db_connection.commit()
+
+
 
     # inserts all users and marks relevant ones with labeled_ids with true
     def insert_user(self, table_name):
@@ -184,6 +181,7 @@ def main():
     program = None
     try:
         program = ExampleProgram()
+        program.insert_activity_and_trackpoints()
         #program.insert_activity()
         #program.create_Activity()
         #program.create_trackpoint()
@@ -200,5 +198,5 @@ def main():
 
 
 if __name__ == '__main__':
-    pass
-    #main()
+    #pass
+    main()
