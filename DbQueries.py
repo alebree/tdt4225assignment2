@@ -88,16 +88,17 @@ class ExampleProgram:
         for (root,dirs,files) in os.walk('Data'):
             user = str(root[5:8])
             # testing with user 6
-            if user =='006': #in users:
+            if user in users: #in users:
                 if root[9:] == "Trajectory":
+                    print('Current User: ' , user)
                     # Now we are in the right folder
                     for filename in files:
                         # read file and skip the 6 headerrows - very important
-                        pltfile = pd.read_csv(str(root)+ '\\' + filename, skiprows=[0,1,2,3,4,5])
+                        pltfile = pd.read_csv(str(root)+ '\\' + filename, header=None, skiprows=[0,1,2,3,4,5])
                         pltfile = pltfile.values.tolist()
 
                         if len(pltfile) > 2500:
-                            print("More than 2500, skip this activity")
+                            #print("More than 2500, skip this activity")
                             continue
                         else:
                             # insert activity here
@@ -108,10 +109,13 @@ class ExampleProgram:
                             #get the activity ID from the last insert
                             activity_id = self.cursor.lastrowid
                             # insert Trackpoints with the same activity ID
+                            trackpoint_insert_list = []
                             for i in range(len(pltfile)):
-                                trackpoint_insert = [activity_id, pltfile[i][0], pltfile[i][1], pltfile[i][3], pltfile[i][4], str(pltfile[i][5]) + ' ' + str(pltfile[i][6])]
-                                trackpoint_query = "INSERT INTO TrackPoint (activity_id, lat, lon, altitude, date_days, date_time) VALUES (%s, %s, %s, %s, %s, %s)"
-                                self.cursor.execute(trackpoint_query, trackpoint_insert)
+                                trackpoint_insert = (activity_id, pltfile[i][0], pltfile[i][1], pltfile[i][3], pltfile[i][4], str(pltfile[i][5]) + ' ' + str(pltfile[i][6]))
+                                trackpoint_insert_list.append(trackpoint_insert)
+                            
+                            trackpoint_query = "INSERT INTO TrackPoint (activity_id, lat, lon, altitude, date_days, date_time) VALUES (%s, %s, %s, %s, %s, %s)"
+                            self.cursor.executemany(trackpoint_query, trackpoint_insert_list)
                             self.db_connection.commit()
 
 
