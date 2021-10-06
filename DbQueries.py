@@ -1,5 +1,5 @@
 import csv
-
+from mysql.connector import cursor
 from DbConnector import DbConnector
 from tabulate import tabulate
 import os
@@ -11,10 +11,9 @@ def relevant_users():
     with open('labeled_ids.txt') as file:
             lables = file.readlines()
             lables = [line.rstrip() for line in lables]
-
     return lables
 
-
+# NOT USED ANYMORE
 # creates dictioary with relevant Data to insert into the Activity table
 def read_labels():
     labels = relevant_users()
@@ -88,7 +87,7 @@ class ExampleProgram:
         for (root,dirs,files) in os.walk('Data'):
             user = str(root[5:8])
             # testing with user 6
-            if user in users: #in users:
+            if user == '006':#in users: #in users:
                 if root[9:] == "Trajectory":
                     print('Current User: ' , user)
                     # Now we are in the right folder
@@ -104,7 +103,7 @@ class ExampleProgram:
                             # insert activity here
                             activity_insert = [user, str(pltfile[0][5]) +' ' + str(pltfile[0][6]), str(pltfile[-1][5]) + ' ' + str(pltfile[-1][6])]
                             query = "INSERT INTO Activity (user_id, start_date_time, end_date_time) VALUES (%s, %s, %s)"
-                            self.cursor.execute(query, activity_insert)
+                            #self.cursor.execute(query, activity_insert)
 
                             #get the activity ID from the last insert
                             activity_id = self.cursor.lastrowid
@@ -115,10 +114,37 @@ class ExampleProgram:
                                 trackpoint_insert_list.append(trackpoint_insert)
                             
                             trackpoint_query = "INSERT INTO TrackPoint (activity_id, lat, lon, altitude, date_days, date_time) VALUES (%s, %s, %s, %s, %s, %s)"
-                            self.cursor.executemany(trackpoint_query, trackpoint_insert_list)
+                            #self.cursor.executemany(trackpoint_query, trackpoint_insert_list)
                             self.db_connection.commit()
 
-
+    def match_activity_labels(self):
+        labels = relevant_users()
+        for (root,dirs,files) in os.walk('Data'):
+            user = str(root[5:8])
+            if user in labels:
+                if files[0] == 'labels.txt':
+                    print('Current User: ' + user)            
+                    with open(str(root)+'\labels.txt') as file:
+                        activities = []
+                        for line in csv.reader(file, delimiter='\t'): #You can also use delimiter="\t" rather than giving a dialect.
+                            line.insert(0,user)
+                            activities.append(tuple(line))
+                        #delete the column titles    
+                        activities.pop(0)
+                    # check for each activity in the labels.txt file    
+                    for check in activities:
+                        select_query = "SELECT * FROM Activity WHERE user_id = \'%s\' AND start_date_time = \'%s\' AND end_date_time = \'%s\' ;" % (check[0], check[1], check[2])
+                        self.cursor.execute(select_query)
+                        rows = self.cursor.fetchall()
+                        #  if there is a match update this Activity with the transportation mode
+                        if rows:
+                            update_query = "UPDATE Activity SET transportation_mode = \'%s\' WHERE id = \'%s\';" % (check[3], rows[0][0])
+                            self.cursor.execute(update_query)
+                            self.db_connection.commit()
+                            #print(update_query)                  
+            else:
+                pass
+        return 
 
     # inserts all users and marks relevant ones with labeled_ids with true
     def insert_user(self, table_name):
@@ -185,7 +211,8 @@ def main():
     program = None
     try:
         program = ExampleProgram()
-        program.insert_activity_and_trackpoints()
+        #program.insert_activity_and_trackpoints()
+        program.match_activity_labels()
         #program.insert_activity()
         #program.create_Activity()
         #program.create_trackpoint()
