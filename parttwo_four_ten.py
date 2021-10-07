@@ -85,13 +85,54 @@ class parttwo:
                 distance_activity += geopy.distance.distance(gps_points[count], gps_points[count+1]).km
             total_distance += distance_activity
         return print('Total distance walked: ', total_distance)
+ 
+    # only sum up altitude when next TrackPoint is higher than the one before
+    def task11(self):
+        user_altitude_dic = {}
+        # First get all activites from one user
+        for user in range(182):
+            user = f"{user:03d}"
+            activity_query = "Select id from Activity where user_id = '%s'" % (user)
+            self.cursor.execute(activity_query)
+            activity_ids = self.cursor.fetchall()
+
+            total_altitude_user = 0
+            # Get the altitudes for every activity of the User
+            for activity in activity_ids:
+                select_query = "Select altitude FROM TrackPoint where activity_id = %s;" % (activity[0])
+                self.cursor.execute(select_query)
+                rows = self.cursor.fetchall()
+        
+                total_altitude_activity = 0
+                
+                for i in range(0, len(rows)):
+                    if i == 0:
+                        continue
+                    #print(rows[i][0])
+                    if rows[i][0] == -777:
+                        continue
+                    if rows[i][0] > rows[i-1][0]:
+                        #print(rows[i][0])
+                        total_altitude_activity += rows[i][0] - rows[i-1][0]
+                    
+                # add the gained altitude of every activity of the user to the total user gained altitude
+                total_altitude_user += total_altitude_activity
+                #convert feet to meters for the solution
+                total_altitude_user = total_altitude_user/3.2808
+            # add all user to a dictionary 
+            user_altitude_dic[user] = total_altitude_user
+        
+        sorted_dic = dict(sorted(user_altitude_dic.items(), key=lambda item: item[1], reverse=True))
+        return print('Solution in decending order: ', sorted_dic)
+
 
 def main():
     program = None
     try:
         program = parttwo()
-        program.task9b_user62()
-        program.task9b_user128()
+        #program.task9b_user62()
+        #program.task9b_user128()
+        program.task11()
         #program.match_activity_labels()
     except Exception as e:
         print("ERROR: Failed to use database:", e)
