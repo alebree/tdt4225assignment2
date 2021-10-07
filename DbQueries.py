@@ -212,7 +212,7 @@ def main():
     try:
         program = ExampleProgram()
         #program.insert_activity_and_trackpoints()
-        program.match_activity_labels()
+        #program.match_activity_labels()
         #program.insert_activity()
         #program.create_Activity()
         #program.create_trackpoint()
