@@ -1,6 +1,7 @@
 from mysql.connector import cursor
 from DbConnector import DbConnector
 import geopy.distance
+import datetime
 
 class parttwo:
     def __init__(self):
@@ -128,28 +129,49 @@ class parttwo:
 
     # 12. Find all users who have invalid activities, and the number of invalid activities per user
     def task12(self):
-        print("12. Find all users who have invalid activities, and the number of invalid activities per user")
-        query1 = """select activity_id from TrackPoint"""
-        self.cursor.execute(query1)
-        query1_results = self.cursor.fetchall()
-        list_of_activities = []
-        list_of_users = []
-        for i in query1_results:
-            query2 = """select date_days from TrackPoint where activity_id=\'%s\'""" % (i[0])
-            self.cursor.execute(query2)
-            query2_results = self.cursor.fetchall()
-            for j in range(0, len(query2_results)-1):
-                k = j + 1
+        # dictionary with invalid activites per user
+        invalid_activities_users = {}
+        #First get all activites from one user
+        for user in range(182):
+            user = f"{user:03d}"
+            activity_query = "Select id from Activity where user_id = '%s'" % (user)
+            self.cursor.execute(activity_query)
+            activity_ids = self.cursor.fetchall()
 
-                if query2_results[j][0] > query2_results[k][0]+0.003472224 \
-                        or query2_results[j][0] < query2_results[k][0]-0.003472224:
-                        list_of_activities.append(i[0])
+            invalid_activities = []
+            # Get the Trackpoint data for one activity
+            for activity in activity_ids:
+                select_query = "Select date_time FROM TrackPoint where activity_id = %s;" % (activity[0])
+                self.cursor.execute(select_query)
+                rows = self.cursor.fetchall()
+            
+                invalid_activity = False
+                for i in range(0, len(rows)):
+                    #skip first entry
+                    if i == 0:
+                        continue
+                    time_difference = rows[i][0] - rows[i-1][0]
+                    # check if consecutive trackpoint is earlier ---> never actually happens but still
+                    if time_difference < datetime.timedelta(minutes=0): 
+                        invalid_activity = True
+                    # check if consecutive trackpoint is more than 5 min later than previoous trackpoint
+                    if time_difference > datetime.timedelta(minutes=5):
+                        #print(time_difference)
+                        #print('Invalid Activity', activity)
+                        invalid_activity = True
+                    else:
+                        pass
+                if invalid_activity == True:
+                    invalid_activities.append(activity[0])
 
-        for l in list_of_activities:
-            query3 = """select id_user from Activity where id = \'%s\'""" % (l[0])
-            self.cursor.execute(query3)
-            query3_results = self.cursor.fetchall()
-            list_of_users.append(query3_results[0])
+            if len(invalid_activities) > 0:
+                invalid_activities_users[user] = invalid_activities
+
+        #print(invalid_activities_users)
+        print(len(invalid_activities_users))
+        for key, value in invalid_activities_users.items():
+            print(key, len([item for item in value if item]))
+
 
 def main():
     program = None
