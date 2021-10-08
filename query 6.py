@@ -59,7 +59,8 @@ def take_dates_withinhour(self):
                 s4date = datetime.strptime(s4, FMT)
                 if s1 != s2:
                     result = s2date - s1date
-                    if result.days == 0:
+                    if result.days == 0 and ((s1date + timedelta(hours=1)) > s2date or
+                                             (s1date + timedelta(hours=-1)) < s2date):
                         activities_close.append(s1date)
         for l in activities_close:
             query3 = """select id_user from Activity where id = '%s\'""" % (activities_close[l])
