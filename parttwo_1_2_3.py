@@ -18,17 +18,15 @@ def getCounts(self):
 #2. Find the average, minimum and maximum number of activities per user.
 def getAverageMinMax(self):
     print("2. Find the average, minimum and maximum number of activities per user.")
-    #add a join to table Activity to get user_id and select only activities that have a user_id?
-    queryMax = "select activity_id, count(activity_id) from TrackPoint group by activity_id order by count(activity_id) desc limit 1;" 
+    queryMax = "SELECT a.user_id, COUNT(t.activity_id) as numberOfActivities FROM TrackPoint t INNER JOIN Activity a ON t.activity_id=a.id GROUP BY a.user_id ORDER BY COUNT(t.activity_id) DESC LIMIT 1;" 
     self.cursor.execute(queryMax)
     records = self.cursor.fetchall()
     print(records)
-    #add a join to table Activity to get user_id and select only activities that have a user_id?
-    queryMin = "select activity_id, count(activity_id) from TrackPoint group by activity_id order by count(activity_id) asc limit 1;" 
+    queryMin = "SELECT a.user_id, COUNT(t.activity_id) as numberOfActivities FROM TrackPoint t INNER JOIN Activity a ON t.activity_id=a.id GROUP BY a.user_id ORDER BY COUNT(t.activity_id) ASC LIMIT 1;" 
     self.cursor.execute(queryMin)
     records = self.cursor.fetchall()
     print(records)
-    queryAvg = "select avg(a.count) from (select count(*) as count from TrackPoint ac group by ac.activity_id) a" 
+    queryAvg = "SELECT AVG(tr.count) FROM (select COUNT(*) as count FROM TrackPoint t INNER JOIN Activity a ON t.activity_id=a.id GROUP BY t.activity_id) tr;" 
     self.cursor.execute(queryAvg)
     records = self.cursor.fetchall()
     print(records)
@@ -36,7 +34,7 @@ def getAverageMinMax(self):
 #3. Find the top 10 users with the highest number of activities.
 def highestNumberOfActivities(self):
     print("3. Find the top 10 users with the highest number of activities.")
-    queryTop10 = "select activity_id, count(activity_id) from TrackPoint group by activity_id order by count(activity_id) desc limit 10;" 
+    queryTop10 = "SELECT a.user_id, COUNT(t.activity_id) FROM TrackPoint t INNER JOIN Activity a ON t.activity_id=a.id GROUP BY a.user_id ORDER BY COUNT(t.activity_id) DESC LIMIT 10;" 
     self.cursor.execute(queryTop10)
     records = self.cursor.fetchall()
     print(records)
